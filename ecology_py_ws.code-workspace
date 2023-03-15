@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.languageServer": "Pylance",
+		"python.linting.flake8Enabled": true,
+		"python.testing.pytestArgs": [
+			"./test"
+		],
+		"python.testing.unittestEnabled": false,
+		"python.testing.pytestEnabled": true
+	}
+}
