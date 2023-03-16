@@ -2,7 +2,10 @@
 
 ![Python](https://img.shields.io/badge/-Python-646464?logo=python&labelColor=FFD43B)
 ![VSCode](https://img.shields.io/badge/-VSCode-blue?logo=visualstudiocode&logoColor=blue&labelColor=white)
-![License](https://img.shields.io/github/license/hdescobarh/simulaciones-ecologia)
+![Lang-es](https://img.shields.io/badge/lang-es-coral)
+![Software-License](https://img.shields.io/github/license/hdescobarh/simulaciones-ecologia)
+![Content-License](https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png)
+
 
 Simulaciones numéricas de dinámica poblacional y técnicas de muestreo. El propósito de estas es ayudar a familiarizarse con algunos conceptos; no pretende ser una revisión exhaustiva de todos los temas clave.
 
