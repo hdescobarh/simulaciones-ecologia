@@ -8,12 +8,29 @@
 		"python.languageServer": "Pylance",
 		"python.linting.flake8Enabled": true,
 		"python.testing.pytestArgs": [
-			"./src/tests"
+			"tests"
 		],
 		"python.testing.unittestEnabled": false,
 		"python.testing.pytestEnabled": true,
 		"editor.defaultFormatter": null,
 		"editor.formatOnSave": true,
-		"python.formatting.provider": "black"
-	}
+		"python.formatting.provider": "black",
+		"python.linting.flake8Args": [
+			"--max-line-length=120",
+		],
+		"python.analysis.typeCheckingMode": "basic",
+		"autoDocstring.docstringFormat": "google"
+	},
+	"extensions": {
+		"recommendations": [
+			"visualstudioexptteam.vscodeintellicode",
+			"ms-python.python",
+			"ms-python.vscode-pylance",
+			"ms-python.isort",
+			"ms-python.flake8",
+			"ms-toolsai.jupyter",
+			"njpwerner.autodocstring",
+			"naumovs.theme-oceanicnext"
+		]
+	},
 }
