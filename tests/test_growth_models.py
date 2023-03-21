@@ -31,28 +31,27 @@ def test_failst_to_call_growth_progression():
 
 def test_valid_instance_of_SimpleLinear():
     initial_size = 100
-    slope = 5
-    mySimpleLinear = growth_models.SimpleLinear(initial_size, slope)
-    assert mySimpleLinear.slope == slope
+    mySimpleLinear = growth_models.SimpleLinear(initial_size)
+    assert mySimpleLinear.initial_size == initial_size
 
 
 def test_fails_SimplLinear_growth_function():
     initial_size = 100
     slope = 5
-    mySimpleLinear = growth_models.SimpleLinear(initial_size, slope)
+    mySimpleLinear = growth_models.SimpleLinear(initial_size)
     with pytest.raises(Exception):
-        mySimpleLinear.general_function(-1)
+        mySimpleLinear.general_function(-1, slope)
 
 
 def test_SimplLinear_growth_function():
     initial_size = 100
     slope = 4
-    mySimpleLinear = growth_models.SimpleLinear(initial_size, slope)
-    assert mySimpleLinear.general_function(5) == 120
+    mySimpleLinear = growth_models.SimpleLinear(initial_size)
+    assert mySimpleLinear.general_function(5, slope) == 120
 
 
 def test_SimpleLinear_growth_progression():
     initial_size = 100
-    slope = 4
-    mySimpleLinear = growth_models.SimpleLinear(initial_size, slope)
-    assert mySimpleLinear.time_progression(5, 0, 100) == 120
+    commond_difference = 4
+    mySimpleLinear = growth_models.SimpleLinear(initial_size)
+    assert mySimpleLinear.time_progression(5, 0, 100, commond_difference) == 120

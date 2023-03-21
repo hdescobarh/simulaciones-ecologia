@@ -26,25 +26,25 @@ class SimpleLinear(Growth):
         Growth (class): Superclass for all population growth models.
     """
 
-    def __init__(self, initial_size: float, slope: float) -> None:
+    def __init__(self, initial_size: float) -> None:
         super().__init__(initial_size)
-        self.slope = slope
 
-    def general_function(self, time_point: int | float) -> float:
+    def general_function(self, time_point: int | float, slope: int | float) -> float:
         """Describes the population growth as a function of the time.
 
         Args:
             time_point (int | float): time of development from the intial obseved state
             (population size with regard an arbitary initial time = 0).
+            slope (int | float): the growth rate
 
         Returns:
             float: The population size at time = time_point.
         """
         if time_point < 0:
             raise Exception("Time must be a non-negative value.")
-        return self.initial_size + (self.slope * time_point)
+        return self.initial_size + (slope * time_point)
 
-    def time_progression(self, t_n: int, t_x: int, size_tx: float) -> float:
+    def time_progression(self, t_n: int, t_x: int, size_tx: float, common_difference: int | float) -> float:
         """Represents the population size as a arithmetic progression:
             a_n = a_x + (n - x) * d
 
@@ -52,8 +52,9 @@ class SimpleLinear(Growth):
             t_n (int): _description_
             t_x (int): _description_
             size_tx (float): _description_
+            common_difference (int | float): the difference  a_t - a_{t-1}
 
         Returns:
             float: population size at timepoint t_n
         """
-        return size_tx + (t_n - t_x) * self.slope
+        return size_tx + (t_n - t_x) * common_difference
