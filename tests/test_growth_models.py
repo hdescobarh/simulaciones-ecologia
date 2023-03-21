@@ -36,17 +36,23 @@ def test_valid_instance_of_SimpleLinear():
     assert mySimpleLinear.slope == slope
 
 
+def test_fails_SimplLinear_growth_function():
+    initial_size = 100
+    slope = 5
+    mySimpleLinear = growth_models.SimpleLinear(initial_size, slope)
+    with pytest.raises(Exception):
+        mySimpleLinear.general_function(-1)
+
+
 def test_SimplLinear_growth_function():
-    initial_size = 30
+    initial_size = 100
     slope = 4
     mySimpleLinear = growth_models.SimpleLinear(initial_size, slope)
-    # TODO: add correct assert condition. assert mySimpleLinear.general_function(5) == 0
-    pass
+    assert mySimpleLinear.general_function(5) == 120
 
 
 def test_SimpleLinear_growth_progression():
     initial_size = 100
-    slope = 5
+    slope = 4
     mySimpleLinear = growth_models.SimpleLinear(initial_size, slope)
-    # TODO: added correct assert condition. assert mySimpleLinear.time_progression(10, 61, 1500) == 0
-    pass
+    assert mySimpleLinear.time_progression(5, 0, 100) == 120

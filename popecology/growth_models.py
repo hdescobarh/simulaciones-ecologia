@@ -54,6 +54,6 @@ class SimpleLinear(Growth):
             size_tx (float): _description_
 
         Returns:
-            float: _description_
+            float: population size at timepoint t_n
         """
         return size_tx + (t_n - t_x) * self.slope
