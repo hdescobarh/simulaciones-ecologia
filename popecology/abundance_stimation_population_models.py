@@ -36,6 +36,10 @@ class CmrPopulation(SamplingPopulation):
         natality_distribution: tuple[float, float, float],
         mark_lost_probability: float,
     ) -> None:
+        # BUG: Correct formulas. The implemented equation is wrong; the correct expression is:
+        #  P(X | no marked) * P(no marked) + P(X|marked) * P(marked) =
+        #  P( X and no marked) + P( X and marked) = P(X)
+
         """Initialices an istance of capture-mark-recapture class.
         Distributions describe how behaves a trait X with respect to marked state. In order:
             1st. P( X | no marked) = a
@@ -51,10 +55,21 @@ class CmrPopulation(SamplingPopulation):
             mark_lost_probability (float): Probability of list the mark at next sampling.
         """
         super().__init__(initial_size, growth_model)
-        self.current_unmarked_absolute_frequency: float = initial_size
-        self.current_marked_absolute_frequency: float = 0.0
+
+        # Initialize population state variables
+        self.current_unmarked: int | float = initial_size
+        self.current_marked: int | float = 0.0
         self.current_time_step: int = 0
-        # Check and assing probability distributions
+
+        # Initialize population state and samples records
+        self.population_record: list[dict[str, int | float]] = [
+            {self.unmarked_id: initial_size, self.marked_id: 0}
+        ]
+        self.sample_record: list[dict[str, int | float]] = [
+            {self.unmarked_id: 0, self.marked_id: 0}
+        ]
+
+        # Population parameters: distributions and probabilities
         self.capture_distribution: tuple[
             float, float, float
         ] = self.__distribution_validator(capture_distribution, "")
@@ -64,13 +79,15 @@ class CmrPopulation(SamplingPopulation):
         self.natality_distribution: tuple[
             float, float, float
         ] = self.__distribution_validator(natality_distribution, "")
-        # check and assing probability value
+
+        # check and assing probability values
         self.__check_valid_probability_value(mark_lost_probability)
         self.mark_lost_probability: float = mark_lost_probability
 
     def __distribution_validator(
         self, distribution: tuple[float, float, float], id_msg: str
     ) -> tuple[float, float, float]:
+        # BUG: the equation is wrong. P(A| ¬M) + P(A|M) ≠ P(A)
         # Check values correspond to a partition. P(A| ¬M) + P(A|M) = P(A)
         if sum(distribution[0:2]) != distribution[2]:
             raise Exception(
@@ -89,8 +106,30 @@ class CmrPopulation(SamplingPopulation):
                 "A probability must be a non-negative value equal or lower than 1.0"
             )
 
-    def time_step(self):
+    def __sample_and_mark(self):
+        # take a sample for the population
+
+        # update mark states
+
+        # update records
+
+        # TODO: implement function
+        pass
+
+    def __sample_but_not_mark(self):
+        # take a sample and do nothing more
+
+        # TODO: implement function
+        pass
+
+    def time_interlude_independent_of_growth_model(self):
         """Describes how the population changes between two CONSECUTIVE samplings"""
+        # born individuals
+        # die individuals
+        # some individuals lost their mark
+        # update time counter
+
+        # IMPORTANT! remember tu update population size accordingly to growth function.
         # TODO: implement function
         pass
 
