@@ -31,7 +31,6 @@ class CmrPopulation(SamplingPopulation):
         initial_size: int,
         capture_distribution: tuple[float, float],
         death_distribution: tuple[float, float],
-        birth_distribution: tuple[float, float],
         inmigration_rate: int,
         mark_lost_probability: float,
     ) -> None:
@@ -42,7 +41,7 @@ class CmrPopulation(SamplingPopulation):
             - All samplings have the same probability distribution.
             - There is only one kind of mark and it does not allows to distinct between individuals.
             - There are not deaths caused by the capture or marking process.
-            - Death and birth probability are constant.
+            - Death probability is constant.
 
         X_distribution represents the conditional probabilities [P(X|unmarked), P(X|marked)], such that:
         P(X|unmarked) * P(unmarked) + P(X|marked) * P(marked) = P(X)
@@ -51,7 +50,6 @@ class CmrPopulation(SamplingPopulation):
             initial_size (float): Initial population size before ANY sampling
             capture_distribution (tuple[float, float]): _description_
             death_distribution (tuple[float, float]): _description_
-            birth_distribution (tuple[float, float]): _description_
             inmigration_rate (float): _description_
             mark_lost_probability (float): _description_
         """
@@ -77,9 +75,6 @@ class CmrPopulation(SamplingPopulation):
         )
         self._death_distribution: tuple[float, float] = self.__distribution_validator(
             death_distribution, ""
-        )
-        self._birth_distribution: tuple[float, float] = self.__distribution_validator(
-            birth_distribution, "birth_distribution"
         )
         self._inmigration_rate = self.__check_is_natural_number(
             inmigration_rate, include_zero=True, msg="inmigration_rate"
@@ -128,7 +123,9 @@ class CmrPopulation(SamplingPopulation):
             }
         )
         self.time_step_record.append(self._current_time_step)
-        if new_sample_record is not None:
+        if new_sample_record is None:
+            self.sample_record.append({"no_sample_u": 0, "no_sample_m": 0})
+        else:
             self.sample_record.append(new_sample_record)
 
     def __sample_without_replacement(self, sample_size: int) -> dict[str, int]:
@@ -154,13 +151,17 @@ class CmrPopulation(SamplingPopulation):
             )
 
             # P(captured|unmarked) P(unmarked) + P(captured|marked) P(marked), P(marked) = 1 - P(unmarked)
-            total_probability = (
+            total_probability: float = (
                 self._capture_distribution[0] - self._capture_distribution[1]
             ) * p_unmarked + self._capture_distribution[1]
 
-            p_unmarked_given_captured: float = (
-                self._capture_distribution[0] * p_unmarked / total_probability
-            )
+            # When P(captured) = 0
+            if total_probability == 0:
+                p_unmarked_given_captured = 0.0
+            else:
+                p_unmarked_given_captured: float = (
+                    self._capture_distribution[0] * p_unmarked / total_probability
+                )
 
             unmarked_sampled += np.random.binomial(1, p_unmarked_given_captured)
 
@@ -192,19 +193,9 @@ class CmrPopulation(SamplingPopulation):
     def time_interlude(self):
         # TODO: complete docstring
 
-        """Describes how the population changes if sampling time is bigger enough
+        """Describes how the population changes if sampling time is bigger enough."""
 
-        First compute mark lost, next deaths, and finally new individuals.
-        The marks are lost at start of interval
-        P(repdoduction|died in that interval) = 0
-        New individuals by inmigration do not reproduce at that time invertal
-        All new individuals are unmarked
-        """
-
-        # TODO: check and replace the mathematical models for others more apropiate:
-        # - A marked individual can lost its mark almost one time
-        # - A dead individual cannot die again
-        # - The births per individual can be greater than one
+        # TODO: check and evaluate if the mathematical model is appropriate.
 
         # Individuals that lost their marks
         lost_marks: int = np.random.binomial(
@@ -224,18 +215,8 @@ class CmrPopulation(SamplingPopulation):
         self._current_unmarked += dead_unmarked
         self._current_marked -= dead_marked
 
-        # New individuals
-        births_from_unmarked: int = np.random.binomial(
-            self._current_unmarked, self._birth_distribution[0]
-        )
-        births_from_marked: int = np.random.binomial(
-            self._current_marked, self._birth_distribution[1]
-        )
-
-        # Born and inmigration balance
-        self._current_unmarked = (
-            births_from_unmarked + births_from_marked + self._inmigration_rate
-        )
+        # Inmigration balance
+        self._current_unmarked += self._inmigration_rate
 
         # update time counter
         self._current_time_step += 1
