@@ -1,4 +1,4 @@
-from popecology import abundance_stimation_population_models as aspm
+from popecology import abundance_estimation_population_models as aspm
 import pytest
 
 # Test SamplingPopulation superclass
