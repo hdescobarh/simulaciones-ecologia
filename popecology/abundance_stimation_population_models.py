@@ -6,9 +6,10 @@ import numpy as np
 class SamplingPopulation:
     """Superclass for models designed to study abundance stimation techniques"""
 
-    def __init__(self, initial_size: float) -> None:
+    def __init__(self, initial_size: int) -> None:
         if initial_size <= 0:
             raise Exception("Initial population size must be a positive number")
+        self.initial_size: int = initial_size
         self.marked_id: str = "marked"
         self.unmarked_id: str = "unmarked"
 
@@ -57,9 +58,9 @@ class CmrPopulation(SamplingPopulation):
         super().__init__(initial_size)
 
         # Initialize population state variables
-        self.current_unmarked: int = initial_size
-        self.current_marked: int = 0
-        self.current_time_step: int = 0
+        self._current_unmarked: int = initial_size
+        self._current_marked: int = 0
+        self._current_time_step: int = 0
 
         # Initialize population state and samples records
         self.population_record: list[dict[str, int]] = [
@@ -71,24 +72,32 @@ class CmrPopulation(SamplingPopulation):
         self.time_step_record: list[int] = [0]
 
         # Population parameters: distributions and probabilities
-        self.capture_distribution: tuple[float, float] = self.__distribution_validator(
+        self._capture_distribution: tuple[float, float] = self.__distribution_validator(
             capture_distribution, "capture_distribution"
         )
-        self.death_distribution: tuple[float, float] = self.__distribution_validator(
+        self._death_distribution: tuple[float, float] = self.__distribution_validator(
             death_distribution, ""
         )
-        self.birth_distribution: tuple[float, float] = self.__distribution_validator(
+        self._birth_distribution: tuple[float, float] = self.__distribution_validator(
             birth_distribution, "birth_distribution"
         )
-
-        # TODO checker for non-negative value
-        assert inmigration_rate >= 0
-        self.inmigration_rate = inmigration_rate
+        self._inmigration_rate = self.__check_is_natural_number(
+            inmigration_rate, include_zero=True, msg="inmigration_rate"
+        )
 
         # check and assing probability values
-        self.mark_lost_probability: float = self.__check_valid_probability_value(
+        self._mark_lost_probability: float = self.__check_valid_probability_value(
             mark_lost_probability, "mark_lost_probability"
         )
+
+    def __check_valid_probability_value(self, probability: float, msg: str) -> float:
+        if probability < 0 or probability > 1:
+            raise Exception(
+                "{}:\nA probability must be a non-negative value equal or lower than 1.0".format(
+                    msg
+                )
+            )
+        return probability
 
     def __distribution_validator(
         self, distribution: tuple[float, float], msg: str
@@ -102,98 +111,133 @@ class CmrPopulation(SamplingPopulation):
             ),
         )
 
-    def __check_valid_probability_value(self, probability: float, msg: str) -> float:
-        if probability < 0 or probability > 1:
-            raise Exception(
-                "{}:\nA probability must be a non-negative value equal or lower than 1.0".format(
-                    msg
-                )
-            )
-        return probability
+    def __check_is_natural_number(self, value: int, msg: str, include_zero=True) -> int:
+        if include_zero and value < 0:
+            raise Exception("{}:\nMust be a non-negative value.".format(msg))
+
+        if not include_zero and value <= 0:
+            raise Exception("{}:\nMust be a positive value.".format(msg))
+
+        return value
 
     def __update_records(self, new_sample_record: dict[str, int] | None = None):
         self.population_record.append(
             {
-                self.unmarked_id: self.current_unmarked,
-                self.marked_id: self.current_marked,
+                self.unmarked_id: self._current_unmarked,
+                self.marked_id: self._current_marked,
             }
         )
-        self.time_step_record.append(self.current_time_step)
+        self.time_step_record.append(self._current_time_step)
         if new_sample_record is not None:
             self.sample_record.append(new_sample_record)
 
-    def __sample_with_replacement(self) -> dict[str, int]:
-        unmarked_sampled: int = np.random.binomial(
-            self.current_unmarked, self.capture_distribution[0]
-        )
-        marked_sampled: int = np.random.binomial(
-            self.current_marked, self.capture_distribution[1]
-        )
+    def __sample_without_replacement(self, sample_size: int) -> dict[str, int]:
+        """Obtain a sample without replacement.
+
+        Let q = P(capture|unmarked) * P(unmarked) + P(capture|marked) * P(marked) = P(capture), and
+        X in {unmarked, marked}.
+
+        P(X|captured) = P(capture|X) * P(X) / q
+
+        Returns:
+            dict[str, int]: The marked and unmarked sampled number
+        """
+        population_current_size = self._current_unmarked + self._current_marked
+        if sample_size > population_current_size:
+            raise Exception("Sample size cannot be bigger than the actual population")
+
+        unmarked_sampled: int = 0
+
+        for i in range(0, sample_size):
+            p_unmarked: float = max(self._current_unmarked - unmarked_sampled, 0) / (
+                population_current_size - i
+            )
+
+            # P(captured|unmarked) P(unmarked) + P(captured|marked) P(marked), P(marked) = 1 - P(unmarked)
+            total_probability = (
+                self._capture_distribution[0] - self._capture_distribution[1]
+            ) * p_unmarked + self._capture_distribution[1]
+
+            p_unmarked_given_captured: float = (
+                self._capture_distribution[0] * p_unmarked / total_probability
+            )
+
+            unmarked_sampled += np.random.binomial(1, p_unmarked_given_captured)
+
+        marked_sampled = sample_size - unmarked_sampled
         return {self.unmarked_id: unmarked_sampled, self.marked_id: marked_sampled}
 
-    def __sample_and_mark(self) -> dict[str, int]:
-        # TODO Erro handling
-
+    def sample_and_mark(self, sample_size: int) -> dict[str, int]:
         # take a sample for the population
-        sample = self.__sample_with_replacement()
-        total_sampled = sum(sample.values())
+        sample = self.__sample_without_replacement(sample_size)
 
-        # update mark states
-        self.current_unmarked -= total_sampled
-        self.current_marked += total_sampled
+        # update population marks state
+        self._current_unmarked = self._current_unmarked - sample[self.unmarked_id]
+        self._current_marked = self._current_marked + sample[self.unmarked_id]
+
+        # update records
         self.__update_records(sample)
+
         return sample
 
-    def __sample_but_not_mark(self) -> dict[str, int]:
-        # TODO Erro handling
+    def sample_but_not_mark(self, sample_size: int) -> dict[str, int]:
+        # take a sample for the population
+        sample = self.__sample_without_replacement(sample_size)
 
-        sample = self.__sample_with_replacement()
+        # update records
         self.__update_records(sample)
+
         return sample
 
     def time_interlude(self):
-        """Describes how the population changes between two CONSECUTIVE samplings
+        # TODO: complete docstring
+
+        """Describes how the population changes if sampling time is bigger enough
 
         First compute mark lost, next deaths, and finally new individuals.
+        The marks are lost at start of interval
+        P(repdoduction|died in that interval) = 0
+        New individuals by inmigration do not reproduce at that time invertal
+        All new individuals are unmarked
         """
+
+        # TODO: check and replace the mathematical models for others more apropiate:
+        # - A marked individual can lost its mark almost one time
+        # - A dead individual cannot die again
+        # - The births per individual can be greater than one
+
         # Individuals that lost their marks
         lost_marks: int = np.random.binomial(
-            self.current_marked, self.mark_lost_probability
+            self._current_marked, self._mark_lost_probability
         )
-        self.current_unmarked += lost_marks
-        self.current_marked -= lost_marks
+        self._current_unmarked += lost_marks
+        self._current_marked -= lost_marks
 
         # Dead individuals
         dead_unmarked: int = np.random.binomial(
-            self.current_unmarked, self.death_distribution[0]
+            self._current_unmarked, self._death_distribution[0]
         )
         dead_marked: int = np.random.binomial(
-            self.current_marked, self.death_distribution[1]
+            self._current_marked, self._death_distribution[1]
         )
 
-        self.current_unmarked += dead_unmarked
-        self.current_marked -= dead_marked
+        self._current_unmarked += dead_unmarked
+        self._current_marked -= dead_marked
 
         # New individuals
         births_from_unmarked: int = np.random.binomial(
-            self.current_unmarked, self.birth_distribution[0]
+            self._current_unmarked, self._birth_distribution[0]
         )
         births_from_marked: int = np.random.binomial(
-            self.current_marked, self.birth_distribution[1]
+            self._current_marked, self._birth_distribution[1]
         )
 
         # Born and inmigration balance
-        self.current_unmarked = (
-            births_from_unmarked + births_from_marked + self.inmigration_rate
+        self._current_unmarked = (
+            births_from_unmarked + births_from_marked + self._inmigration_rate
         )
 
         # update time counter
-        self.current_time_step += 1
+        self._current_time_step += 1
         # Update records
         self.__update_records()
-
-    def sample(self, with_mark: bool = False) -> dict[str, int]:
-        if with_mark:
-            return self.__sample_and_mark()
-        else:
-            return self.__sample_but_not_mark()
