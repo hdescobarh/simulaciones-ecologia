@@ -168,32 +168,3 @@ def test_CmrPopulation_sample_and_mark_cannot_capture_unmarked():
     )
     myPopulation.sample_and_mark(10)
     assert myPopulation._current_unmarked == 15
-
-
-def test_CmrPopulation_sample_and_mark_multiple_sampling():
-    myPopulation = aspm.CmrPopulation(
-        initial_size=5,
-        capture_distribution=(1, 0),
-        death_distribution=(0.5, 0.5),
-        inmigration_rate=0,
-        mark_lost_probability=0,
-    )
-    myPopulation.sample_and_mark(2)
-    assert myPopulation._current_unmarked == 3
-    myPopulation.sample_and_mark(2)
-    assert myPopulation._current_unmarked == 1
-
-
-def test_CmrPopulation_sample_and_mark_no_remaining_unmarked():
-    myPopulation = aspm.CmrPopulation(
-        initial_size=5,
-        capture_distribution=(1, 0),
-        death_distribution=(0.5, 0.5),
-        inmigration_rate=0,
-        mark_lost_probability=0,
-    )
-    myPopulation.sample_and_mark(2)
-    assert myPopulation._current_unmarked == 3
-    myPopulation.sample_and_mark(2)
-    assert myPopulation._current_unmarked == 1
-    assert myPopulation.sample_and_mark(2)[myPopulation.unmarked_id] == 1

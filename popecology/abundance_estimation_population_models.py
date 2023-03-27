@@ -128,26 +128,34 @@ class CmrPopulation(SamplingPopulation):
         else:
             self.sample_record.append(new_sample_record)
 
-    def __sample_without_replacement(self, sample_size: int) -> dict[str, int]:
+    def __sample_without_replacement(self, trap_number: int) -> dict[str, int]:
         """Obtain a sample without replacement.
 
-        Let q = P(capture|unmarked) * P(unmarked) + P(capture|marked) * P(marked) = P(capture), and
-        X in {unmarked, marked}.
+        For each i trap:
 
-        P(X|captured) = P(capture|X) * P(X) / q
+        First, determine if trap successfully captured an individual.
+            P(capture|unmarked) * P(unmarked_i) + P(capture|marked) * P(marked_i) = P(capture_i)
+        Second, given a successful capture, define whether it is marked or doesn't.
+            P(unmarked|captured) = P(captured|unmarked) P(unmarked_i) / P(capture_i)
+
+        Args:
+            trap_number (int): The number of traps. A trap can capture only one individual.
+            A captured individual cannot be trapped by another trap.
 
         Returns:
-            dict[str, int]: The marked and unmarked sampled number
+            dict[str, int]: Number of marked and unmarked captured individuals.
         """
+
         population_current_size = self._current_unmarked + self._current_marked
-        if sample_size > population_current_size:
+        if trap_number > population_current_size:
             raise Exception("Sample size cannot be bigger than the actual population")
 
         unmarked_sampled: int = 0
+        capture_failure_count: int = 0
 
-        for i in range(0, sample_size):
+        for i in range(0, trap_number):
             p_unmarked: float = max(self._current_unmarked - unmarked_sampled, 0) / (
-                population_current_size - i
+                population_current_size - i + capture_failure_count
             )
 
             # P(captured|unmarked) P(unmarked) + P(captured|marked) P(marked), P(marked) = 1 - P(unmarked)
@@ -155,17 +163,18 @@ class CmrPopulation(SamplingPopulation):
                 self._capture_distribution[0] - self._capture_distribution[1]
             ) * p_unmarked + self._capture_distribution[1]
 
-            # When P(captured) = 0
-            if total_probability == 0:
-                p_unmarked_given_captured = 0.0
-            else:
-                p_unmarked_given_captured: float = (
-                    self._capture_distribution[0] * p_unmarked / total_probability
-                )
+            captured_something: bool = np.random.binomial(1, total_probability) == 1
 
-            unmarked_sampled += np.random.binomial(1, p_unmarked_given_captured)
+            if not captured_something:
+                capture_failure_count += 1
+                continue
 
-        marked_sampled = sample_size - unmarked_sampled
+            # If captured_something is True, necessarily total_probability ≠ 0.
+            p_unmarked_given_captured: float = (
+                self._capture_distribution[0] * p_unmarked / total_probability
+            )
+            unmarked_sampled += np.random.binomial(1, p_unmarked_given_captured) == 1
+        marked_sampled = trap_number - unmarked_sampled - capture_failure_count
         return {self.unmarked_id: unmarked_sampled, self.marked_id: marked_sampled}
 
     def sample_and_mark(self, sample_size: int) -> dict[str, int]:
