@@ -2,6 +2,7 @@
 # author: Hans D. Escobar. H - e-mail: escobar.hans@gmail.com
 
 from numpy import sqrt
+from numpy import nan
 
 
 class LincolnPetersen:
@@ -57,9 +58,13 @@ class LincolnPetersen:
     def simple_biased_statistic(
         captured: int, recaptured_unmarked: int, recaptured_marked: int
     ) -> float:
-        Validator.check_positive_integer(
+        Validator.check_non_negative_value(
             [captured, recaptured_unmarked, recaptured_marked]
         )
+
+        # If no marked recaptures, then the statistic is undefined
+        if recaptured_marked == 0:
+            return nan
 
         return captured * (recaptured_unmarked + recaptured_marked) / recaptured_marked
 
@@ -67,7 +72,7 @@ class LincolnPetersen:
     def bailey_unbiased_summary(
         captured: int, recaptured_unmarked: int, recaptured_marked: int
     ) -> dict[str, float]:
-        Validator.check_positive_integer(
+        Validator.check_non_negative_value(
             [captured, recaptured_unmarked, recaptured_marked]
         )
         return {
@@ -83,7 +88,7 @@ class LincolnPetersen:
     def chapman_unbiased_summary(
         captured: int, recaptured_unmarked: int, recaptured_marked: int
     ) -> dict[str, float]:
-        Validator.check_positive_integer(
+        Validator.check_non_negative_value(
             [captured, recaptured_unmarked, recaptured_marked]
         )
         return {
@@ -98,7 +103,9 @@ class LincolnPetersen:
 
 class Validator:
     @staticmethod
-    def check_positive_integer(values: list[int]):
+    def check_non_negative_value(values: list[int], only_positive: bool = False):
         for v in values:
-            if v <= 0:
+            if only_positive and v <= 0:
                 raise Exception("All values must be positive integers")
+            if not only_positive and v < 0:
+                raise Exception("All values must be non-negative integers")
