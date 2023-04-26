@@ -6,8 +6,13 @@
 ![Software-License](https://img.shields.io/github/license/hdescobarh/simulaciones-ecologia)
 ![Content-License](https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png)
 
+## Descripción
 
-Simulaciones numéricas de dinámica poblacional y técnicas de muestreo. El propósito de estas es ayudar a familiarizarse con algunos conceptos; no pretende ser una revisión exhaustiva de todos los temas clave.
+El propósito de este repositorio es pedagógico. Su fin es familiarizarse con algunos conceptos en ecología y no pretende ser una revisión exhaustiva de todos los temas. El código no se encuentra optimizado, tampoco esta minuciosamente testeado para su uso en investigación.
+
+## Description
+
+This repository is for educational purposes. It is thought to be used to reinforce some concepts in ecology. The code is not optimized nor properly tested for research usage.
 
 ## License
 
