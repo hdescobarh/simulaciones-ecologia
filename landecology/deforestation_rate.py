@@ -5,14 +5,26 @@ from numpy import power
 from enum import Enum
 
 
-class DeforestationFormula(Enum):
-    FOREST_CHANGE_PUYRAVAUD = 1
-    FOREST_CHANGE_FAO = 2
-    ANNUAL_DEFORESTATION_FEARNSIDE_LIU = 3
-    ANNUAL_DEFORESTATION_WRI = 4
+class DeforestationFormula(str, Enum):
+    FOREST_CHANGE_PUYRAVAUD = "Puyravaud"
+    FOREST_CHANGE_FAO = "FAO"
+    ANNUAL_DEFORESTATION_FEARNSIDE_LIU = "Fearnside-Liu"
+    ANNUAL_DEFORESTATION_WRI = "Wri"
 
 
 class DeforestationCalculator:
+    """
+    Collection of methods for determining forest coverture change. Equations are based on:
+
+    Puyravaud, J.-P. (2003). Standardizing the calculation of the annual rate of deforestation.
+    Forest Ecology and Management, 177(1–3), 593–596. https://doi.org/10.1016/S0378-1127(02)00335-3
+
+    Raises:
+        Warning: time parameters could be inverted
+        Exception: requested invalid formula
+        NotImplementedError: requested method not implemented yet
+    """
+
     INVALID_TYPE: str = "Choose a valid deforestation rate formula.\n"
     WARN_POTENTIAL_TIME_INCONSISTENCY: str = "Time time 1 is not lower than time 2.\n"
 
