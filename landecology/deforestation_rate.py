@@ -9,7 +9,7 @@ class DeforestationFormula(str, Enum):
     FOREST_CHANGE_PUYRAVAUD = "Puyravaud"
     FOREST_CHANGE_FAO = "FAO"
     ANNUAL_DEFORESTATION_FEARNSIDE_LIU = "Fearnside-Liu"
-    ANNUAL_DEFORESTATION_WRI = "Wri"
+    ANNUAL_DEFORESTATION_WRI = "WRI"
 
 
 class DeforestationCalculator:
@@ -20,9 +20,9 @@ class DeforestationCalculator:
     Forest Ecology and Management, 177(1–3), 593–596. https://doi.org/10.1016/S0378-1127(02)00335-3
 
     Raises:
-        Warning: time parameters could be inverted
+        Warning: time parameters may be inverted
         Exception: requested invalid formula
-        NotImplementedError: requested method not implemented yet
+        NotImplementedError: requested a not implemented yet method
     """
 
     INVALID_TYPE: str = "Choose a valid deforestation rate formula.\n"
